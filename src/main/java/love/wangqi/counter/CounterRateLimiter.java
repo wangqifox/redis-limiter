@@ -37,7 +37,7 @@ public class CounterRateLimiter extends RedisPool {
                 return false;
             }
         } finally {
-            returnJedis(redis);
+            closeJedis(redis);
         }
     }
 }

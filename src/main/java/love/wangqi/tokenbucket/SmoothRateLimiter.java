@@ -82,7 +82,7 @@ public abstract class SmoothRateLimiter extends RateLimiter {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            returnJedis(redis);
+            closeJedis(redis);
         }
         return 0;
     }
@@ -99,7 +99,7 @@ public abstract class SmoothRateLimiter extends RateLimiter {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            returnJedis(redis);
+            closeJedis(redis);
         }
         return 0;
     }

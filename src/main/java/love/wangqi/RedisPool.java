@@ -1,7 +1,8 @@
 package love.wangqi;
 
-import org.apache.commons.pool2.impl.GenericObjectPool;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 
 /**
  * @author: wangqi
@@ -9,19 +10,27 @@ import redis.clients.jedis.Jedis;
  * @date: Created in 2018/8/2 上午10:05
  */
 public abstract class RedisPool {
-    private GenericObjectPool<Jedis> jedisPool;
+    private JedisPool jedisPool = null;
+    private String host = "localhost";
+    private int port = 6379;
+    private String password = null;
 
     public RedisPool() {
-        jedisPool = new GenericObjectPool<>(new JedisPooledFactory("localhost", 6379));
+        try {
+            JedisPoolConfig config = new JedisPoolConfig();
+            jedisPool = new JedisPool(config, host, port, 3000, password);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     protected Jedis getJedis() throws Exception {
-        return jedisPool.borrowObject();
+        return jedisPool.getResource();
     }
 
-    protected void returnJedis(Jedis redis) {
-        if (redis != null) {
-            jedisPool.returnObject(redis);
+    protected void closeJedis(Jedis jedis) {
+        if (jedis != null) {
+            jedis.close();
         }
     }
 }
