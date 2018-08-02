@@ -1,5 +1,6 @@
 package love.wangqi;
 
+import love.wangqi.counter.CounterRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,18 +12,18 @@ import java.util.List;
  * @description:
  * @date: Created in 2018/8/1 下午7:50
  */
-public class Action {
-    private static final Logger logger = LoggerFactory.getLogger(Action.class);
+public class CounterRateLimiterTest {
+    private static final Logger logger = LoggerFactory.getLogger(CounterRateLimiterTest.class);
 
-    private RateLimiter rateLimiter;
+    private CounterRateLimiter counterRateLimiter;
 
-    public Action() throws Exception {
-        rateLimiter = new RateLimiter("limiter", 1, 1 * 1000L);
+    public CounterRateLimiterTest() throws Exception {
+        counterRateLimiter = new CounterRateLimiter("limiter", 1, 1 * 1000L);
     }
 
     public void doSomething() throws Exception {
         while (true) {
-            if (rateLimiter.acquire(1)) {
+            if (counterRateLimiter.acquire(1)) {
                 logger.info("do something");
                 break;
             }
@@ -30,7 +31,7 @@ public class Action {
     }
 
     public static void main(String[] args) throws Exception {
-        Action action = new Action();
+        CounterRateLimiterTest action = new CounterRateLimiterTest();
 
         List<Thread> threadList = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
