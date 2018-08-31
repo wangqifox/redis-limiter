@@ -74,16 +74,10 @@ public abstract class RateLimiter extends RedisPool {
     }
 
     public double acquire(int permits) {
-        long microToWait = reserve(permits);
+        checkPermits(permits);
+        long microToWait = waitMicros(permits);
         stopwatch.sleepMicrosUninterruptibly(microToWait);
         return 1.0 * microToWait / SECONDS.toMicros(1L);
-    }
-
-    final long reserve(int permits) {
-        checkPermits(permits);
-        synchronized (mutex()) {
-            return reserveAndGetWaitLength(permits);
-        }
     }
 
     public boolean tryAcquire(long timeout, TimeUnit unit) {
@@ -101,30 +95,20 @@ public abstract class RateLimiter extends RedisPool {
     public boolean tryAcquire(int permits, long timeout, TimeUnit unit) {
         long timeoutMicros = max(unit.toMicros(timeout), 0);
         checkPermits(permits);
-        long microsToWait;
-        synchronized (mutex()) {
-            if (!canAcquire(permits, timeoutMicros)) {
-                return false;
-            } else {
-                microsToWait = reserveAndGetWaitLength(permits);
-            }
+        long microsToWait = queryWaitMicros(permits, timeoutMicros);
+        if (microsToWait > timeoutMicros) {
+            return false;
         }
         stopwatch.sleepMicrosUninterruptibly(microsToWait);
         return true;
     }
 
-    private boolean canAcquire(int permits, long timeoutMicros) {
-        return queryEarliestAvailable(permits, timeoutMicros) <= timeoutMicros;
+    final long waitMicros(int permits) {
+        long waitMicros = queryWaitMicros(permits, null);
+        return max(waitMicros, 0);
     }
 
-    final long reserveAndGetWaitLength(int permits) {
-        long momentAvailable = reserveEarliestAvailable(permits);
-        return max(momentAvailable, 0);
-    }
-
-    abstract long queryEarliestAvailable(int permits, long timeoutMicros);
-
-    abstract long reserveEarliestAvailable(int permits);
+    abstract long queryWaitMicros(int permits, Long timeoutMicros);
 
     @Override
     public String toString() {

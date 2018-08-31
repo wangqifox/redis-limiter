@@ -19,6 +19,7 @@ if (ARGV[2] ~= nil) then
     -- 获取令牌的超时时间
     local timeout_micros = tonumber(ARGV[2])
     local micros_to_wait = next_free_ticket_micros - now_micros
+    -- 不能获取到令牌，直接返回
     if (micros_to_wait > timeout_micros) then
         return micros_to_wait
     end
@@ -37,7 +38,6 @@ if (now_micros > next_free_ticket_micros) then
 end
 
 -- 消耗令牌
-local moment_available = next_free_ticket_micros
 local stored_permits_to_spend = math.min(required_permits, stored_permits)
 local fresh_permits = required_permits - stored_permits_to_spend;
 local wait_micros = fresh_permits * stable_interval_micros
@@ -45,7 +45,7 @@ local wait_micros = fresh_permits * stable_interval_micros
 redis.replicate_commands()
 redis.call('hset', key, 'stored_permits', stored_permits - stored_permits_to_spend)
 redis.call('hset', key, 'next_free_ticket_micros', next_free_ticket_micros + wait_micros)
-redis.call('expire', key, 10)
+redis.call('expire', key, 30)
 
 -- 返回需要等待的时间长度
-return moment_available - now_micros
+return next_free_ticket_micros - now_micros

@@ -3,7 +3,9 @@ package love.wangqi.tokenbucket;
 import love.wangqi.ScriptUtil;
 import redis.clients.jedis.Jedis;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -71,30 +73,17 @@ public abstract class SmoothRateLimiter extends RateLimiter {
     }
 
     @Override
-    long queryEarliestAvailable(int permits, long timeoutMicros) {
+    long queryWaitMicros(int permits, Long timeoutMicros) {
         Jedis redis = null;
-        try {
-            redis = getJedis();
-            Object result = redis.eval(script,
-                    Arrays.asList(key, String.valueOf(maxPermits), String.valueOf(permitsPerSecond)),
-                    Arrays.asList(String.valueOf(permits), String.valueOf(timeoutMicros)));
-            return (long) result;
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeJedis(redis);
+        List<String> keys = Arrays.asList(key, String.valueOf(maxPermits), String.valueOf(permitsPerSecond));
+        List<String> args = new ArrayList<>();
+        args.add(String.valueOf(permits));
+        if (timeoutMicros != null) {
+            args.add(String.valueOf(timeoutMicros));
         }
-        return 0;
-    }
-
-    @Override
-    final long reserveEarliestAvailable(int requiredPermits) {
-        Jedis redis = null;
         try {
             redis = getJedis();
-            Object result = redis.eval(script,
-                    Arrays.asList(key, String.valueOf(maxPermits), String.valueOf(permitsPerSecond)),
-                    Arrays.asList(String.valueOf(requiredPermits)));
+            Object result = redis.eval(script, keys, args);
             return (long) result;
         } catch (Exception e) {
             e.printStackTrace();
