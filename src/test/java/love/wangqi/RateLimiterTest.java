@@ -18,19 +18,44 @@ public class RateLimiterTest {
 
     @Test
     public void test01() throws InterruptedException {
-        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 20.0);
-        class MyRun implements Runnable {
-            @Override
-            public void run() {
-                boolean acquire = rateLimiter.tryAcquire();
-                if (acquire) {
-                    logger.info("running... wait " + acquire);
+        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 10.0);
+
+        class Statistics {
+            long start = 0;
+            long count = 0;
+
+            public synchronized void success() {
+                if (start == 0) {
+                    start = System.currentTimeMillis();
+                }
+                if (System.currentTimeMillis() - start <= 1000) {
+                    count++;
+                } else {
+                    System.out.println("count" + count);
+                    start = System.currentTimeMillis();
+                    count = 0;
                 }
             }
         }
 
+        Statistics statistics = new Statistics();
+
+        class MyRun implements Runnable {
+            @Override
+            public void run() {
+                boolean acquire;
+                do {
+                    acquire = rateLimiter.tryAcquire();
+                    if (acquire) {
+                        logger.info("running... wait " + acquire);
+                        statistics.success();
+                    }
+                } while (!acquire);
+            }
+        }
+
         List<Thread> threadList = new ArrayList<>();
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
             threadList.add(new Thread(new MyRun()));
         }
         for (Thread thread : threadList) {
