@@ -18,16 +18,19 @@ public class RateLimiterTest {
 
     @Test
     public void test01() throws InterruptedException {
-        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 10.0);
+        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 20.0);
         class MyRun implements Runnable {
             @Override
             public void run() {
-                logger.info("running... wait " + rateLimiter.acquire());
+                boolean acquire = rateLimiter.tryAcquire();
+                if (acquire) {
+                    logger.info("running... wait " + acquire);
+                }
             }
         }
 
         List<Thread> threadList = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10000; i++) {
             threadList.add(new Thread(new MyRun()));
         }
         for (Thread thread : threadList) {
