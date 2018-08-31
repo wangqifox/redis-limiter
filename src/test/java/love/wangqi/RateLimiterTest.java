@@ -31,7 +31,7 @@ public class RateLimiterTest {
                 if (System.currentTimeMillis() - start <= 1000) {
                     count++;
                 } else {
-                    System.out.println("count" + count);
+                    System.out.println("count " + count);
                     start = System.currentTimeMillis();
                     count = 0;
                 }
@@ -55,7 +55,29 @@ public class RateLimiterTest {
         }
 
         List<Thread> threadList = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
+            threadList.add(new Thread(new MyRun()));
+        }
+        for (Thread thread : threadList) {
+            thread.start();
+        }
+        for (Thread thread : threadList) {
+            thread.join();
+        }
+    }
+
+    @Test
+    public void test02() throws InterruptedException {
+        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 1.0);
+        class MyRun implements Runnable {
+            @Override
+            public void run() {
+                logger.info("running... wait " + rateLimiter.acquire());
+            }
+        }
+
+        List<Thread> threadList = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
             threadList.add(new Thread(new MyRun()));
         }
         for (Thread thread : threadList) {
