@@ -8,8 +8,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.Uninterruptibles;
-import love.wangqi.RedisPool;
-import love.wangqi.tokenbucket.SmoothRateLimiter.SmoothBursty;
+import redis.clients.jedis.Jedis;
 
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -19,18 +18,7 @@ import java.util.concurrent.TimeUnit;
  * @description:
  * @date: Created in 2018/8/2 上午7:43
  */
-public abstract class RateLimiter extends RedisPool {
-
-    public static RateLimiter create(String key, double permitsPerSecond) {
-        return create(key, permitsPerSecond, SleepingStopwatch.createFromSystemTimer());
-    }
-
-    static RateLimiter create(String key, double permitsPerSecond, SleepingStopwatch stopwatch) {
-        RateLimiter rateLimiter = new SmoothBursty(key, stopwatch, 1.0);
-        rateLimiter.setRate(permitsPerSecond);
-        return rateLimiter;
-    }
-
+public abstract class RateLimiter {
     private final SleepingStopwatch stopwatch;
 
     private volatile Object mutexDoNotUseDirectly;
@@ -144,4 +132,6 @@ public abstract class RateLimiter extends RedisPool {
     private static void checkPermits(int permits) {
         checkArgument(permits > 0, "Requested permits (%s) must be positive", permits);
     }
+
+    protected abstract Jedis getJedis();
 }

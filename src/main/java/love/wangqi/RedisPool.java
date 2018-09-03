@@ -1,5 +1,6 @@
 package love.wangqi;
 
+import net.sf.cglib.proxy.Enhancer;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -10,12 +11,12 @@ import redis.clients.jedis.JedisPoolConfig;
  * @date: Created in 2018/8/2 上午10:05
  */
 public abstract class RedisPool {
-    private JedisPool jedisPool = null;
-    private String host = "localhost";
-    private int port = 6379;
-    private String password = null;
+    private static JedisPool jedisPool = null;
+    private static String host = "localhost";
+    private static int port = 6379;
+    private static String password = null;
 
-    public RedisPool() {
+    static {
         try {
             JedisPoolConfig config = new JedisPoolConfig();
             jedisPool = new JedisPool(config, host, port, 3000, password);
@@ -24,13 +25,11 @@ public abstract class RedisPool {
         }
     }
 
-    protected Jedis getJedis() throws Exception {
-        return jedisPool.getResource();
-    }
-
-    protected void closeJedis(Jedis jedis) {
-        if (jedis != null) {
-            jedis.close();
-        }
+    public static Jedis getJedis() {
+        JedisPoolProxy proxy = new JedisPoolProxy(jedisPool);
+        Enhancer enhancer = new Enhancer();
+        enhancer.setSuperclass(Jedis.class);
+        enhancer.setCallback(proxy);
+        return (Jedis) enhancer.create();
     }
 }

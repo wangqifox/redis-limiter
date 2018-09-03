@@ -26,18 +26,14 @@ public class CounterRateLimiter extends RedisPool {
 
     public Boolean acquire(int permits) throws Exception {
         Jedis redis = getJedis();
-        try {
-            Object result = redis.eval(script,
-                    Arrays.asList(key, String.valueOf(maxPermits), String.valueOf(intervalMilliseconds)),
-                    Arrays.asList(String.valueOf(permits))
-            );
-            if (result != null && 0 != (Long) result) {
-                return true;
-            } else {
-                return false;
-            }
-        } finally {
-            closeJedis(redis);
+        Object result = redis.eval(script,
+                Arrays.asList(key, String.valueOf(maxPermits), String.valueOf(intervalMilliseconds)),
+                Arrays.asList(String.valueOf(permits))
+        );
+        if (result != null && 0 != (Long) result) {
+            return true;
+        } else {
+            return false;
         }
     }
 }

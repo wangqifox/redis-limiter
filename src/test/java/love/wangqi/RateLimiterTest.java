@@ -1,5 +1,6 @@
 package love.wangqi;
 
+import love.wangqi.tokenbucket.RateLimiterBuilder;
 import love.wangqi.tokenbucket.RateLimiter;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,7 +20,8 @@ public class RateLimiterTest {
 
     @Test
     public void test01() throws InterruptedException {
-        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 10.0);
+        RateLimiterBuilder rateLimiterBuilder = new RateLimiterBuilder().setJedis(RedisPool.getJedis());
+        RateLimiter rateLimiter = rateLimiterBuilder.create("smooth_ratelimiter", 10.0);
 
         class Statistics {
             long start = 0;
@@ -82,7 +84,8 @@ public class RateLimiterTest {
 
     @Test
     public void test02() throws InterruptedException {
-        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 1.0);
+        RateLimiterBuilder flowLimiter = new RateLimiterBuilder();
+        RateLimiter rateLimiter = flowLimiter.create("smooth_ratelimiter", 1.0);
         class MyRun implements Runnable {
             @Override
             public void run() {
@@ -104,7 +107,8 @@ public class RateLimiterTest {
 
     @Test
     public void test03() {
-        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 1.0);
+        RateLimiterBuilder flowLimiter = new RateLimiterBuilder();
+        RateLimiter rateLimiter = flowLimiter.create("smooth_ratelimiter", 1.0);
         Arrays.asList(6, 2, 6).forEach(num -> System.out.println(System.currentTimeMillis() + " wait " + rateLimiter.acquire(num)));
     }
 }

@@ -1,6 +1,5 @@
 package love.wangqi.tokenbucket;
 
-import love.wangqi.ScriptUtil;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
@@ -16,31 +15,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public abstract class SmoothRateLimiter extends RateLimiter {
 
-    static final class SmoothBursty extends SmoothRateLimiter {
-        final double maxBurstSeconds;
-
-        SmoothBursty(String key, SleepingStopwatch stopwatch, double maxBurstSeconds) {
-            super(stopwatch);
-            this.script = ScriptUtil.getScript("smooth_ratelimiter.lua");
-            this.key = key;
-            this.maxBurstSeconds = maxBurstSeconds;
-        }
-
-        @Override
-        void doSetRate(double permitsPerSecond, double stableIntervalMicros) {
-            double oldMaxPermits = this.maxPermits;
-            this.permitsPerSecond = permitsPerSecond;
-            maxPermits = maxBurstSeconds * permitsPerSecond;
-            if (oldMaxPermits == Double.POSITIVE_INFINITY) {
-                storedPermits = maxPermits;
-            } else {
-                storedPermits =
-                        (oldMaxPermits == 0.0)
-                        ? 0.0 : storedPermits * maxPermits / oldMaxPermits;
-            }
-        }
-    }
-
     String key;
 
     String script;
@@ -54,7 +28,7 @@ public abstract class SmoothRateLimiter extends RateLimiter {
     double stableIntervalMicros = 0;
 
 
-    private SmoothRateLimiter(SleepingStopwatch stopwatch) {
+    protected SmoothRateLimiter(SleepingStopwatch stopwatch) {
         super(stopwatch);
     }
 
@@ -75,7 +49,6 @@ public abstract class SmoothRateLimiter extends RateLimiter {
 
     @Override
     long queryWaitMicros(int permits, Long timeoutMicros) {
-        Jedis redis = null;
         List<String> keys = Arrays.asList(key, String.valueOf(maxPermits), String.valueOf(permitsPerSecond));
         List<String> args = new ArrayList<>();
         args.add(String.valueOf(permits));
@@ -83,13 +56,11 @@ public abstract class SmoothRateLimiter extends RateLimiter {
             args.add(String.valueOf(timeoutMicros));
         }
         try {
-            redis = getJedis();
+            Jedis redis = getJedis();
             Object result = redis.eval(script, keys, args);
             return (long) result;
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            closeJedis(redis);
         }
         return 0;
     }
