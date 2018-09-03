@@ -47,7 +47,7 @@ public class RateLimiterTest {
                 do {
                     acquire = rateLimiter.tryAcquire();
                     if (acquire) {
-                        logger.info("running... wait " + acquire);
+//                        logger.info("running... wait " + acquire);
                         statistics.success();
                     }
                 } while (!acquire);
@@ -55,6 +55,19 @@ public class RateLimiterTest {
         }
 
         List<Thread> threadList = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            threadList.add(new Thread(new MyRun()));
+        }
+        for (Thread thread : threadList) {
+            thread.start();
+        }
+        for (Thread thread : threadList) {
+            thread.join();
+        }
+
+        Thread.sleep(3000);
+        System.out.println("=====================");
+        threadList.clear();
         for (int i = 0; i < 100; i++) {
             threadList.add(new Thread(new MyRun()));
         }
