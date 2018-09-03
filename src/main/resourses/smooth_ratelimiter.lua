@@ -39,7 +39,7 @@ end
 
 -- 消耗令牌
 local stored_permits_to_spend = math.min(required_permits, stored_permits)
-local fresh_permits = required_permits - stored_permits_to_spend;
+local fresh_permits = required_permits - stored_permits_to_spend
 local wait_micros = fresh_permits * stable_interval_micros
 
 redis.replicate_commands()
