@@ -45,13 +45,13 @@ public abstract class SmoothRateLimiter extends RateLimiter {
 
     String script;
 
-    double storedPermits;
+    double storedPermits = 0;
 
-    double permitsPerSecond;
+    double permitsPerSecond = 1;
 
-    double maxPermits;
+    double maxPermits = 0;
 
-    double stableIntervalMicros;
+    double stableIntervalMicros = 0;
 
 
     private SmoothRateLimiter(SleepingStopwatch stopwatch) {
@@ -60,6 +60,7 @@ public abstract class SmoothRateLimiter extends RateLimiter {
 
     @Override
     void doSetRate(double permitsPerSecond) {
+        queryWaitMicros(0, null);
         double stableIntervalMicros = SECONDS.toMicros(1L) / permitsPerSecond;
         this.stableIntervalMicros = stableIntervalMicros;
         doSetRate(permitsPerSecond, stableIntervalMicros);
