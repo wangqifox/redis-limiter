@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,7 +48,7 @@ public class RateLimiterTest {
                 do {
                     acquire = rateLimiter.tryAcquire();
                     if (acquire) {
-//                        logger.info("running... wait " + acquire);
+                        logger.info("running... wait " + acquire);
                         statistics.success();
                     }
                 } while (!acquire);
@@ -99,5 +100,11 @@ public class RateLimiterTest {
         for (Thread thread : threadList) {
             thread.join();
         }
+    }
+
+    @Test
+    public void test03() {
+        RateLimiter rateLimiter = RateLimiter.create("smooth_ratelimiter", 1.0);
+        Arrays.asList(6, 2, 6).forEach(num -> System.out.println(System.currentTimeMillis() + " wait " + rateLimiter.acquire(num)));
     }
 }
